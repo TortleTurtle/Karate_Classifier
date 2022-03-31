@@ -9,21 +9,26 @@ const options = {
     outputs: 2,
     debug: true
 }
-let targetLabel;
-let inputs = [];
+const modelDetails = {
+    model: 'poses/poses.json',
+    metadata: 'poses/poses_meta.json',
+    weights: 'poses/poses.weights.bin'
+}
 
 //UI
 let status
+let score
 let canvas;
 const width = 640;
 const height = 480;
 let ctx;
 
 //other variables
-let recording = false;
+let classify = false;
 
 async function setup() {
     status = document.querySelector("#status");
+    score = document.querySelector("#score");
     canvas = document.querySelector("#myCanvas");
     ctx = canvas.getContext("2d");
     //flip horizontally so left and right matches users left and right.
@@ -31,7 +36,7 @@ async function setup() {
     ctx.scale(-1,1);
 
     video = await getVideo();
-    poseNet = ml5.poseNet(video, modelReady);
+    poseNet = ml5.poseNet(video);
     // This sets up an event that fills the global variable "poses"
     // with an array every time new poses are detected
     poseNet.on("pose", function(results) {
@@ -40,29 +45,24 @@ async function setup() {
     });
 
     neuralNetwork = ml5.neuralNetwork(options);
+    neuralNetwork.load(modelDetails, modelReady);
 
-    document.addEventListener("keypress", keyPressed);
+    //document.addEventListener("keypress", keyPressed);
     requestAnimationFrame(draw);
 }
 
 function update(){
-    if (poses.length > 0) {
+    if (poses.length > 0 && classify) {
         let pose = poses[0].pose;
+        let inputs = [];
+        pose.keypoints.forEach((keypoint) => {
+            inputs.push(keypoint.position.x);
+            inputs.push(keypoint.position.y);
+        });
 
-        if (recording) {
-            //flatten keypoint data to array.
-            let target = [targetLabel];
-            pose.keypoints.forEach((keypoint) => {
-                inputs.push(keypoint.position.x);
-                inputs.push(keypoint.position.y);
-            });
-            if (inputs.length > 339) {
-                inputs = inputs.slice(0, 349);
-                neuralNetwork.addData(inputs, target);
-                inputs = [];
-            }
-        }
-
+        neuralNetwork.classify(inputs, (err, results) => {
+            score.innerHTML = `${results[0].label} : ${results[0].confidence}    ${results[1].label} : ${results[1].confidence}`;
+        });
     }
 }
 
@@ -130,36 +130,5 @@ async function getVideo() {
 }
 function modelReady() {
     status.innerHTML = "Model Loaded!";
-}
-
-function keyPressed(e){
-    switch (e.code) {
-        case "KeyC":
-            record("Choko Tsuki");
-            break;
-        case "KeyK":
-            record("Kagi Tsuki");
-            break;
-        case "KeyS":
-            neuralNetwork.saveData();
-            break;
-        case "KeyL":
-            console.log("Loading data");
-            neuralNetwork.loadData("poses.json", () => {console.log("loaded data!")});
-            break;
-        case "KeyT":
-            neuralNetwork.normalizeData();
-            neuralNetwork.train({epochs: 100}, () => {neuralNetwork.save()});
-            break;
-        default:
-            console.log("This key does nothing");
-            break;
-    }
-}
-
-function record(label) {
-    targetLabel = label;
-    status.innerHTML = `Recording ${label} in 2 seconds`;
-    setTimeout(() => {recording = true; status.innerHTML = `Recording: ${label}`;}, 2000);
-    setTimeout(() => {recording = false; status.innerHTML = `Stopped recording: ${label}`;}, 22000);
+    classify = true
 }

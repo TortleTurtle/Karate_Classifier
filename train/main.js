@@ -6,7 +6,7 @@ let neuralNetwork;
 const options = {
     task: 'classification',
     inputs: 34,
-    outputs: 2,
+    outputs: 6,
     debug: true
 }
 let targetLabel;
@@ -122,7 +122,12 @@ async function getVideo() {
     document.body.appendChild(videoElement);
 
     // Create a webcam capture
-    const capture = await navigator.mediaDevices.getUserMedia({ video: true });
+    let capture
+    try{
+        capture = await navigator.mediaDevices.getUserMedia({ video: true });
+    } catch (e) {
+        console.error(e);
+    }
     videoElement.srcObject = capture;
     videoElement.play();
 
@@ -133,12 +138,25 @@ function modelReady() {
 }
 
 function keyPressed(e){
+    console.log(e.code);
     switch (e.code) {
-        case "KeyC":
-            record("Choko Tsuki");
+        case "Digit1":
+            record("Choko Tsuki - Right");
             break;
-        case "KeyK":
-            record("Kagi Tsuki");
+        case "Digit2":
+            record("Choko Tsuki - Left");
+            break;
+        case "Digit3":
+            record("Kagi Tsuki - Right");
+            break;
+        case "Digit4":
+            record("Kagi Tsuki - Left");
+            break;
+        case "Digit5":
+            record("Heiko Dachi");
+            break;
+        case "Digit6":
+            record("Kiba Dachi");
             break;
         case "KeyS":
             neuralNetwork.saveData();
@@ -160,6 +178,6 @@ function keyPressed(e){
 function record(label) {
     targetLabel = label;
     status.innerHTML = `Recording ${label} in 2 seconds`;
-    setTimeout(() => {recording = true; status.innerHTML = `Recording: ${label}`;}, 2000);
-    setTimeout(() => {recording = false; status.innerHTML = `Stopped recording: ${label}`;}, 22000);
+    setTimeout(() => {recording = true; status.innerHTML = `Recording: ${label}`;}, 5000);
+    setTimeout(() => {recording = false; status.innerHTML = `Stopped recording: ${label}`;}, 15000);
 }

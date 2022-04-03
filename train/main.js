@@ -5,7 +5,7 @@ let video;
 let neuralNetwork;
 const options = {
     task: 'classification',
-    inputs: 34,
+    inputs: 34, // must be a multiplication of 34.
     outputs: 6,
     debug: true
 }
@@ -56,13 +56,12 @@ function update(){
                 inputs.push(keypoint.position.x);
                 inputs.push(keypoint.position.y);
             });
-            if (inputs.length > 339) {
-                inputs = inputs.slice(0, 349);
+            if (inputs.length > options.inputs) {
+                inputs = inputs.slice(0, options.inputs - 1);
                 neuralNetwork.addData(inputs, target);
                 inputs = [];
             }
         }
-
     }
 }
 
@@ -163,11 +162,14 @@ function keyPressed(e){
             break;
         case "KeyL":
             console.log("Loading data");
-            neuralNetwork.loadData("poses.json", () => {console.log("loaded data!")});
+            neuralNetwork.loadData("../static/data/poses_3.json", () => {console.log("loaded data!")});
             break;
         case "KeyT":
             neuralNetwork.normalizeData();
-            neuralNetwork.train({epochs: 100}, () => {neuralNetwork.save()});
+            neuralNetwork.train({batch: 10,epochs: 100}, () => console.log("Done Training!") );
+            break;
+        case "KeyM":
+            neuralNetwork.save();
             break;
         default:
             console.log("This key does nothing");
@@ -177,7 +179,7 @@ function keyPressed(e){
 
 function record(label) {
     targetLabel = label;
-    status.innerHTML = `Recording ${label} in 2 seconds`;
+    status.innerHTML = `Recording ${label} in 5 seconds`;
     setTimeout(() => {recording = true; status.innerHTML = `Recording: ${label}`;}, 5000);
     setTimeout(() => {recording = false; status.innerHTML = `Stopped recording: ${label}`;}, 15000);
 }

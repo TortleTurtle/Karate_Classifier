@@ -6,14 +6,15 @@ let neuralNetwork;
 const options = {
     task: 'classification',
     inputs: 34,
-    outputs: 2,
+    outputs: 6,
     debug: true
 }
 const modelDetails = {
-    model: 'poses/poses.json',
-    metadata: 'poses/poses_meta.json',
-    weights: 'poses/poses.weights.bin'
+    model: '../static/models/poses2/model.json',
+    metadata: '../static/models/poses2/model_meta.json',
+    weights: '../static/models/poses2/model.weights.bin'
 }
+let inputs = [];
 
 //UI
 let status
@@ -47,22 +48,25 @@ async function setup() {
     neuralNetwork = ml5.neuralNetwork(options);
     neuralNetwork.load(modelDetails, modelReady);
 
-    //document.addEventListener("keypress", keyPressed);
     requestAnimationFrame(draw);
 }
 
 function update(){
     if (poses.length > 0 && classify) {
         let pose = poses[0].pose;
-        let inputs = [];
         pose.keypoints.forEach((keypoint) => {
             inputs.push(keypoint.position.x);
             inputs.push(keypoint.position.y);
         });
-
-        neuralNetwork.classify(inputs, (err, results) => {
-            score.innerHTML = `${results[0].label} : ${results[0].confidence}    ${results[1].label} : ${results[1].confidence}`;
-        });
+        if (inputs.length > 339) {
+            inputs = inputs.slice(0, 349);
+            neuralNetwork.classify(inputs, (err, results) => {
+                console.log(results);
+                score.innerHTML = "";
+                score.appendChild(displayClassification(results))
+            });
+            inputs = [];
+        }
     }
 }
 
@@ -131,4 +135,13 @@ async function getVideo() {
 function modelReady() {
     status.innerHTML = "Model Loaded!";
     classify = true
+}
+function displayClassification(results) {
+    let list = document.createElement('ul');
+    results.forEach((result) => {
+        let li = document.createElement("li");
+        li.innerHTML = `${result.label} : ${result.confidence}`;
+        list.appendChild(li);
+    });
+    return list;
 }

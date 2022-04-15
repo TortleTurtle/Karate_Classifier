@@ -57,7 +57,8 @@ function update(){
                 inputs.push(keypoint.position.y);
             });
             if (inputs.length > options.inputs) {
-                inputs = inputs.slice(0, options.inputs - 1);
+                inputs = inputs.slice(0, options.inputs);
+                console.log(inputs);
                 neuralNetwork.addData(inputs, target);
                 inputs = [];
             }
@@ -137,7 +138,6 @@ function modelReady() {
 }
 
 function keyPressed(e){
-    console.log(e.code);
     switch (e.code) {
         case "Digit1":
             record("Choko Tsuki - Right");
